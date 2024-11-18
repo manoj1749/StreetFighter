@@ -59,34 +59,30 @@ public class JoyStickClass {
         distance = (float) Math.sqrt(Math.pow(position_x, 2) + Math.pow(position_y, 2));
         angle = (float) cal_angle(position_x, position_y);
 
+        // Handle touch events
+        if (arg1.getAction() == MotionEvent.ACTION_DOWN || arg1.getAction() == MotionEvent.ACTION_MOVE) {
+            touch_state = true; // Set touch_state to true on hold
 
-        if(arg1.getAction() == MotionEvent.ACTION_DOWN) {
-            if(distance <= (params.width / 2) - OFFSET) {
+            if (distance <= (params.width / 2) - OFFSET) {
+                // If within joystick bounds
                 draw.position(arg1.getX(), arg1.getY());
                 draw();
-                touch_state = true;
-            }
-        } else if(arg1.getAction() == MotionEvent.ACTION_MOVE && touch_state) {
-            if(distance <= (params.width / 2) - OFFSET) {
-                draw.position(arg1.getX(), arg1.getY());
-                draw();
-            } else if(distance > (params.width / 2) - OFFSET){
-                float x = (float) (Math.cos(Math.toRadians(cal_angle(position_x, position_y)))
-                        * ((params.width / 2) - OFFSET));
-                float y = (float) (Math.sin(Math.toRadians(cal_angle(position_x, position_y)))
-                        * ((params.height / 2) - OFFSET));
+            } else {
+                // If beyond joystick bounds, limit to edge
+                float x = (float) (Math.cos(Math.toRadians(cal_angle(position_x, position_y))) * ((params.width / 2) - OFFSET));
+                float y = (float) (Math.sin(Math.toRadians(cal_angle(position_x, position_y))) * ((params.height / 2) - OFFSET));
                 x += (params.width / 2);
                 y += (params.height / 2);
                 draw.position(x, y);
                 draw();
-            } else {
-                mLayout.removeView(draw);
             }
-        } else if(arg1.getAction() == MotionEvent.ACTION_UP) {
+        } else if (arg1.getAction() == MotionEvent.ACTION_UP) {
+            // Reset when touch is released
             mLayout.removeView(draw);
             touch_state = false;
         }
     }
+
 
     public int[] getPosition() {
         if(distance > min_distance && touch_state) {
@@ -131,19 +127,26 @@ public class JoyStickClass {
         return min_distance;
     }
 
+
     public int get8Direction() {
-        if( touch_state) {
-            if (angle >= 45 && angle < 135) {
-
-                return STICK_UP; // Up movement
-            } else if (angle >= 135 && angle < 225) {
-                return STICK_LEFT; // Left movement
-            } else if (angle >= 225 && angle < 315) {
-                return STICK_DOWN; // Down movement
-            } else {
-                return STICK_RIGHT; // Right movement (angle < 45 or angle >= 315)
+        if(distance > min_distance && touch_state) {
+            if(angle >= 247.5 && angle < 292.5 ) {
+                return STICK_UP;
+            } else if(angle >= 292.5 && angle < 337.5 ) {
+                return STICK_UPRIGHT;
+            } else if(angle >= 337.5 || angle < 22.5 ) {
+                return STICK_RIGHT;
+            } else if(angle >= 22.5 && angle < 67.5 ) {
+                return STICK_DOWNRIGHT;
+            } else if(angle >= 67.5 && angle < 112.5 ) {
+                return STICK_DOWN;
+            } else if(angle >= 112.5 && angle < 157.5 ) {
+                return STICK_DOWNLEFT;
+            } else if(angle >= 157.5 && angle < 202.5 ) {
+                return STICK_LEFT;
+            } else if(angle >= 202.5 && angle < 247.5 ) {
+                return STICK_UPLEFT;
             }
-
         } else if(distance <= min_distance && touch_state) {
             return STICK_NONE;
         }

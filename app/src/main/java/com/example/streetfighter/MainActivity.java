@@ -153,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 //personal settings (avatar movement)
-                float slowspeed = 8; //increase this value to make the speed slower
+                float slowspeed = 4; //increase this value to make the speed slower
                 long animationduration = 50; //increase this lengthens the animation time resulting in longer reaction time
                 //
                 //getString retrieves the saved information (in this case, its a string)
