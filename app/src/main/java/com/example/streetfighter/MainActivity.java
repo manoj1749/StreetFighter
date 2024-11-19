@@ -1,6 +1,7 @@
 package com.example.streetfighter;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.os.Bundle;
@@ -43,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private long contactStartTime = 0L; // Track when contact started
     private Handler contactHandler = new Handler();
     private boolean isGameOver = false; // Tracks if the game is over
+    private int score = 0; // Tracks the player's score
 
 
     //endregion
@@ -50,6 +52,11 @@ public class MainActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+//        scoreTextView = findViewById(R.id.scoreTextView);
+
+        // Update the score when it changes
+        updateScoreUI();
         //region Declarations
         sp = getSharedPreferences("MyUserPrefs", Context.MODE_PRIVATE);
         avatar = (pl.droidsonroids.gif.GifTextView) findViewById(R.id.avatar);
@@ -862,18 +869,24 @@ public class MainActivity extends AppCompatActivity {
     private void onPlayerDeath() {
         isContactOngoing = false; // Stop contact tracking
         collisionCount = 0; // Reset collision count
-        npc1HitCount=0;
+        npc1HitCount = 0;
         stopCollisionCheck(); // Ensure collision tracking is halted
         isGameOver = true;
 
         // Hide the avatar and NPC
         avatar.setVisibility(View.INVISIBLE);
         npc1.setVisibility(View.INVISIBLE);
-        // Show Game Over message
-        System.out.println("Game Over!"); // Debug log
-        findViewById(R.id.gameOverMessage).setVisibility(View.VISIBLE); // Assuming you add a TextView for Game Over
-        // Optional: Display game-over logic or restart the game
+
+        // Optional: Log for debugging
+        System.out.println("Game Over!");
+
+        // Navigate back to EntryActivity
+        Intent intent = new Intent(MainActivity.this, EntryActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); // Clear the back stack
+        startActivity(intent);
+        finish(); // End the current activity
     }
+
 
     private Handler collisionCheckHandler = new Handler();
 
@@ -1078,17 +1091,38 @@ public class MainActivity extends AppCompatActivity {
     //region NPC1 being hit
     public void npc1beinghit() {
         npc1HitCount++; // Increment hit count
-        System.out.println("NPC hit count: " + npc1HitCount); // Debug log for hit count
+        score += 10; // Increment score by 10 for each hit
+        updateScoreUI(); // Update UI
+        // Log or update UI with the current score
+        System.out.println("NPC hit! Current Score: " + score);
 
+        // Play hit animation
+        Animation fadeout = new AlphaAnimation(1f, 1f);
+        fadeout.setDuration(2500); // Adjust duration as needed
+        fadeout.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                npc1.setBackgroundResource(R.drawable.hit); // NPC1 hit GIF
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                npc1down(); // Return to default state
+            }
+        });
+        npc1.startAnimation(fadeout);
+
+        // Respawn logic remains the same, but NPC won't "die"
         if (npc1HitCount >= 3) {
-            // Hide NPC1 and stop collision checks
+            System.out.println("NPC temporarily retreating...");
+
+            // Hide NPC and respawn after a delay
             npc1.setVisibility(View.INVISIBLE);
             stopCollisionCheck();
-            collisionCount = 0;
 
-            System.out.println("NPC defeated! Respawning in 2 seconds...");
-
-            // Add a 2-second delay before respawning the NPC
             final Handler respawnHandler = new Handler();
             respawnHandler.postDelayed(new Runnable() {
                 @Override
@@ -1108,28 +1142,13 @@ public class MainActivity extends AppCompatActivity {
                     startCollisionCheck();
                 }
             }, 2000); // 2-second delay
-        } else {
-            // Play hit animation
-            Animation fadeout = new AlphaAnimation(1f, 1f);
-            fadeout.setDuration(2500); // Adjust duration as needed
-            fadeout.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-                    npc1.setBackgroundResource(R.drawable.hit); // NPC1 hit GIF
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {}
-
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    npc1down(); // Return to default state
-                }
-            });
-            npc1.startAnimation(fadeout);
         }
     }
 
+    private void updateScoreUI() {
+//        runOnUiThread(() -> scoreTextView.setText("Score: " + score));
+        System.out.println("Score: "+score);
+    }
 
     private void resetGame() {
         // Reset game variables
